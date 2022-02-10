@@ -34,27 +34,13 @@ class TicTacToe:
 
 
 
-    def is_valid_move(self, player):
+    def is_valid_move(self, player, row, col):
         # TODO: Check if the move is valid
-        while (True):
-            try:
-                rowInput = int(input("Enter an empty row index from 0-2: "))
-                colInput = int(input("Enter an empty column index from 0-2: "))
-                if (self.board[rowInput][colInput] == '-'):
-                    if (player == 0):
-                        self.place_player(0,rowInput,colInput)
-                    elif (player == 1):
-                        self.place_player(1,rowInput,colInput)
-                else:
-                    # manually throwing an error if space isnt empty, i know its lazy, im sorry
-                    self.board[100][100] == '-'
-            except IndexError:
-                print("this is not a valid response")
-                continue
-            except ValueError:
-                print("this is not a valid response")
-                continue
-            return
+        if(self.board[row][col] == '-'):
+            return True
+        return False
+
+
 
     def place_player(self, player, row, col):
         # TODO: Place the player on the board
@@ -68,7 +54,28 @@ class TicTacToe:
         # TODO: Ask the user for a row, col until a valid response
         #  is given them place the player's icon in the right spot
 
-        self.is_valid_move(player)
+        while (True):
+            try:
+                rowInput = int(input("Enter an empty row index from 0-2: "))
+                colInput = int(input("Enter an empty column index from 0-2: "))
+                if (self.is_valid_move(player, rowInput, colInput)):
+                    if (player == 0):
+                        self.place_player(0, rowInput, colInput)
+                    elif (player == 1):
+                        self.place_player(1, rowInput, colInput)
+                else:
+                    # manually throwing an error if space isnt empty, i know its lazy, im sorry
+                    self.board[100][100] == '-'
+            except IndexError:
+                print("this is not a valid response")
+                continue
+            except ValueError:
+                print("this is not a valid response")
+                continue
+            return
+
+
+
 
 
 
@@ -79,7 +86,7 @@ class TicTacToe:
     def take_turn(self, player):
         # TODO: Simply call the take_manual_turn function
         print()
-        print("it is now Player " + str(player) + "'s turn")
+        print("it is now Player 1's turn")
         self.take_manual_turn(player)
 
     def check_col_win(self, player):
@@ -174,6 +181,16 @@ class TicTacToe:
 
         return False
 
+    def take_random_turn(self, player):
+        while(True):
+            randomX = random.randrange(3)
+            randomY = random.randrange(3)
+            if(self.is_valid_move(player, randomX, randomY) == True):
+                print("random X = " + str(randomX))
+                print("random Y = " + str(randomY))
+                self.place_player(player, randomX, randomY)
+                break
+
     def play_game(self):
         # TODO: Play game
         playerTurn = 0
@@ -186,7 +203,7 @@ class TicTacToe:
                 self.take_turn(0)
                 print("player 1 turn")
             elif(playerTurn % 2 == 0):
-                self.take_turn(1)
+                self.take_random_turn(1)
                 print("player 2 turn")
             self.print_board()
 
