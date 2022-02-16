@@ -34,7 +34,7 @@ class TicTacToe:
 
 
 
-    def is_valid_move(self, player, row, col):
+    def is_valid_move(self, row, col):
         # TODO: Check if the move is valid
         if(self.board[row][col] == '-'):
             return True
@@ -49,6 +49,8 @@ class TicTacToe:
 
         if (player == 1):
             self.board[row][col] = 'O'
+        if(player == '-'):
+            self.board[row][col] = '-'
 
     def take_manual_turn(self, player):
         # TODO: Ask the user for a row, col until a valid response
@@ -58,7 +60,7 @@ class TicTacToe:
             try:
                 rowInput = int(input("Enter an empty row index from 0-2: "))
                 colInput = int(input("Enter an empty column index from 0-2: "))
-                if (self.is_valid_move(player, rowInput, colInput)):
+                if (self.is_valid_move(rowInput, colInput)):
                     if (player == 0):
                         self.place_player(0, rowInput, colInput)
                     elif (player == 1):
@@ -98,7 +100,6 @@ class TicTacToe:
                     if self.board[t][i] != 'X':
                         winCondition = False
                 if (winCondition == True):
-                    print("col win")
                     return True
         if (player == 1):
             for i in range(self.columns):
@@ -123,7 +124,6 @@ class TicTacToe:
                     if self.board[i][t] != 'X':
                         winCondition = False
                 if (winCondition == True):
-                    print("row win")
                     return True
         if (player == 1):
             for i in range(self.columns):
@@ -173,7 +173,7 @@ class TicTacToe:
     def check_tie(self):
         allEmpty = True
         for i in range(self.columns):
-            for i in range(self.columns):
+            for t in range(self.columns):
                 if(self.board[i][t] == '-'):
                     allEmpty = False
         if (allEmpty == True):
@@ -185,11 +185,62 @@ class TicTacToe:
         while(True):
             randomX = random.randrange(3)
             randomY = random.randrange(3)
-            if(self.is_valid_move(player, randomX, randomY) == True):
+            if(self.is_valid_move(randomX, randomY) == True):
                 print("random X = " + str(randomX))
                 print("random Y = " + str(randomY))
                 self.place_player(player, randomX, randomY)
                 break
+
+    def minimax(self, player):
+
+        if self.check_win(1):
+            return (10, None, None)
+        if self.check_win(0):
+            return (-10, None, None)
+        if self.check_tie():
+            return (0, None, None)
+
+        if(player == 1):
+            max = -10
+            row = -1
+            col = -1
+            for i in range(self.columns):
+                for t in range(self.rows):
+                    if(self.is_valid_move(i, t)):
+                        self.place_player(1, i, t)
+                        score = self.minimax(0)[0]
+                        if(max < score):
+                            max = score
+                            row = i
+                            col = t
+                        self.place_player("-", i, t)
+            return (max, row, col)
+        if (player == 0):
+            min = 10
+            row = -1
+            col = -1
+            for i in range(self.columns):
+                for t in range(self.rows):
+                    if (self.is_valid_move(i, t)):
+                        self.place_player(0, i, t)
+                        score = self.minimax(1)[0]
+                        if (min > score):
+                            min = score
+                            row = i
+                            col = t
+                        self.place_player("-", i, t)
+            return (min, row, col)
+
+    def take_minimax_turn(self, player):
+        score, row, col = self.minimax(player)
+        print("row is " + str(row))
+        print("col is " + str(col))
+        if self.is_valid_move(row, col):
+            self.place_player(player, row, col)
+
+        else:
+            print("invalid")
+
 
     def play_game(self):
         # TODO: Play game
@@ -203,7 +254,7 @@ class TicTacToe:
                 self.take_turn(0)
                 print("player 1 turn")
             elif(playerTurn % 2 == 0):
-                self.take_random_turn(1)
+                self.take_minimax_turn(1)
                 print("player 2 turn")
             self.print_board()
 
