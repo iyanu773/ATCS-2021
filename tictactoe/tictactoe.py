@@ -1,4 +1,5 @@
 import random
+import time
 
 
 class TicTacToe:
@@ -7,7 +8,7 @@ class TicTacToe:
         self.board = []
         self.columns = 3
         self.rows = 3
-        self.depth = 5
+        self.depth = 2
 
         for i in range(self.columns):
             row = []
@@ -169,15 +170,12 @@ class TicTacToe:
             return False
 
     def check_tie(self):
-        allEmpty = True
         for i in range(self.columns):
             for t in range(self.columns):
                 if(self.board[i][t] == '-'):
-                    allEmpty = False
-        if (allEmpty == True):
-            return True
+                    return False
+        return True
 
-        return False
 
     def take_random_turn(self, player):
         while(True):
@@ -196,8 +194,51 @@ class TicTacToe:
             return (-10, None, None)
         if self.check_tie():
             return (0, None, None)
+        if (depth == 0):
+            return (0, None, None)
 
-        print(depth)
+        if(player == 1):
+            max = -100
+            row = -1
+            col = -1
+            for i in range(self.columns):
+                for t in range(self.rows):
+                    if(self.is_valid_move(i, t)):
+                        self.place_player(1, i, t)
+                        score = -10
+                        score = self.minimax(0, depth - 1)[0]
+                        if(max < score):
+                            max = score
+                            row = i
+                            col = t
+                        self.place_player("-", i, t)
+            return (max, row, col)
+        if (player == 0):
+            min = 100
+            row = -1
+            col = -1
+            for i in range(self.columns):
+                for t in range(self.rows):
+                    if (self.is_valid_move(i, t)):
+                        self.place_player(0, i, t)
+                        score = 10
+                        score = self.minimax(1, depth - 1)[0]
+                        if (min > score):
+                            min = score
+                            row = i
+                            col = t
+                        self.place_player("-", i, t)
+            return (min, row, col)
+
+    def minimax_alpha_beta(self, player, depth, alpha, beta):
+        if self.check_win(1):
+            return (10, None, None)
+        if self.check_win(0):
+            return (-10, None, None)
+        if self.check_tie():
+            return (0, None, None)
+
+
         if(player == 1):
             max = -10
             row = -1
@@ -207,8 +248,7 @@ class TicTacToe:
                     if(self.is_valid_move(i, t)):
                         self.place_player(1, i, t)
                         score = -10
-                        if(depth >= 0):
-                            score = self.minimax(0, depth - 1)[0]
+                        score = self.minimax(0, depth - 1)[0]
                         if(max < score):
                             max = score
                             row = i
@@ -224,8 +264,7 @@ class TicTacToe:
                     if (self.is_valid_move(i, t)):
                         self.place_player(0, i, t)
                         score = 10
-                        if (depth >= 0):
-                            score = self.minimax(1, depth - 1)[0]
+                        score = self.minimax(1, depth - 1)[0]
                         if (min > score):
                             min = score
                             row = i
@@ -234,7 +273,10 @@ class TicTacToe:
             return (min, row, col)
 
     def take_minimax_turn(self, player, depth):
+        start = time.time()
         score, row, col = self.minimax(player, depth)
+        end = time.time()
+        print("This took " + str(end-start) + " seconds to run")
         print("row is " + str(row))
         print("col is " + str(col))
         if self.is_valid_move(row, col):
@@ -259,6 +301,9 @@ class TicTacToe:
                 self.take_minimax_turn(1, self.depth)
                 print("player 2 turn")
             self.print_board()
+            if (self.check_tie()):
+                print("The game has ended in a tie")
+                break
 
         if(self.check_win(0) == True):
             self.print_board()
@@ -267,8 +312,7 @@ class TicTacToe:
         elif (self.check_win(1) == True):
             self.print_board()
             print("O wins!")
-        elif(self.check_tie() == True):
-            print("The game has ended in a tie")
+
 
 
 
