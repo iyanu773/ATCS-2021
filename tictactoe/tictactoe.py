@@ -8,7 +8,7 @@ class TicTacToe:
         self.board = []
         self.columns = 3
         self.rows = 3
-        self.depth = 2
+        self.depth = 4
 
         for i in range(self.columns):
             row = []
@@ -153,12 +153,10 @@ class TicTacToe:
             for i in range(self.columns):
                 if (self.board[i][i] != 'O'):
                     winCondition = False
-            if(winCondition == True):
+            if (winCondition == True):
                 return True
-            elif (self.board[0][2] == 'X' and self.board[1][1] == 'X' and self.board[2][0] == 'X'):
+            if(self.board[0][2] == 'O' and self.board[1][1] == 'O' and self.board[2][0] == 'O'):
                 return True
-
-
         return False
 
     def check_win(self, player):
@@ -197,17 +195,16 @@ class TicTacToe:
         if (depth == 0):
             return (0, None, None)
 
-        if(player == 1):
+        if (player == 1):
             max = -100
             row = -1
             col = -1
             for i in range(self.columns):
                 for t in range(self.rows):
-                    if(self.is_valid_move(i, t)):
+                    if (self.is_valid_move(i, t)):
                         self.place_player(1, i, t)
-                        score = -10
                         score = self.minimax(0, depth - 1)[0]
-                        if(max < score):
+                        if (max < score):
                             max = score
                             row = i
                             col = t
@@ -221,7 +218,6 @@ class TicTacToe:
                 for t in range(self.rows):
                     if (self.is_valid_move(i, t)):
                         self.place_player(0, i, t)
-                        score = 10
                         score = self.minimax(1, depth - 1)[0]
                         if (min > score):
                             min = score
@@ -237,44 +233,62 @@ class TicTacToe:
             return (-10, None, None)
         if self.check_tie():
             return (0, None, None)
+        if (depth == 0):
+            return (0, None, None)
 
-
-        if(player == 1):
-            max = -10
+        if (player == 1):
+            maximum = -100
             row = -1
             col = -1
             for i in range(self.columns):
                 for t in range(self.rows):
-                    if(self.is_valid_move(i, t)):
+                    if (self.is_valid_move(i, t)):
                         self.place_player(1, i, t)
-                        score = -10
-                        score = self.minimax(0, depth - 1)[0]
-                        if(max < score):
-                            max = score
+                        score = self.minimax_alpha_beta(0, depth - 1, alpha, beta)[0]
+                        alpha = max(alpha, score)
+                        if (maximum < score):
+                            maximum = score
                             row = i
                             col = t
                         self.place_player("-", i, t)
-            return (max, row, col)
+                        if (alpha >= beta):
+                            return (maximum, row, col)
+            return (maximum, row, col)
         if (player == 0):
-            min = 10
+            minimum = 100
             row = -1
             col = -1
             for i in range(self.columns):
                 for t in range(self.rows):
                     if (self.is_valid_move(i, t)):
                         self.place_player(0, i, t)
-                        score = 10
-                        score = self.minimax(1, depth - 1)[0]
-                        if (min > score):
-                            min = score
+                        score = self.minimax_alpha_beta(1, depth - 1, alpha, beta)[0]
+                        beta = min(beta, score)
+                        if (minimum > score):
+                            minimum = score
                             row = i
                             col = t
                         self.place_player("-", i, t)
-            return (min, row, col)
+                        if (alpha >= beta):
+                            return (minimum, row, col)
+            return (minimum, row, col)
 
     def take_minimax_turn(self, player, depth):
         start = time.time()
         score, row, col = self.minimax(player, depth)
+        end = time.time()
+        print("row is " + str(row))
+        print("col is " + str(col))
+        print("This took " + str(end - start) + " seconds to run")
+        if self.is_valid_move(row, col):
+            self.place_player(player, row, col)
+
+        else:
+            print("invalid")
+
+    def take_minimaxab_turn(self, player, depth, alpha, beta):
+        start = time.time()
+        score, row, col = self.minimax_alpha_beta(player, depth, alpha, beta)
         end = time.time()
         print("This took " + str(end-start) + " seconds to run")
         print("row is " + str(row))
@@ -298,7 +312,8 @@ class TicTacToe:
                 self.take_turn(0)
                 print("player 1 turn")
             elif(playerTurn % 2 == 0):
-                self.take_minimax_turn(1, self.depth)
+                #self.take_minimax_turn(1, self.depth)
+                self.take_minimaxab_turn(1, self.depth, -1000, 1000)
                 print("player 2 turn")
             self.print_board()
             if (self.check_tie()):
@@ -312,6 +327,7 @@ class TicTacToe:
         elif (self.check_win(1) == True):
             self.print_board()
             print("O wins!")
+
 
 
 
