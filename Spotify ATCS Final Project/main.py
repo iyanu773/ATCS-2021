@@ -3,10 +3,14 @@ import random
 import sys
 import tekore
 import tekore as tk
-from time import *
+import time
 import csv
 from tqdm import tqdm
 from random import uniform
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.image as mpimg
+from sklearn.cluster import KMeans
 
 
 client_id = 'dcda589399b14d69a499ae046c464bee'
@@ -53,7 +57,7 @@ def generateSongPool(token, topTracks):
     #Loop through tracks in layer 1 tracks to find tracks of artist collaborators
     x = 0
     for track in layer1TrackList:
-        #time.sleep(.02)
+        time.sleep(.01)
         if(len(track.artists) > 1):
             artistList = track.artists
             for artist in artistList[1:]:
@@ -87,6 +91,29 @@ def generateSongPool(token, topTracks):
     loading = False
     return songPool
 
+#Get the most defining audio features
+def audioFeatureCompiler(token, songPool):
+    audioFeaureArray = []
+
+    index = 0
+    print("here")
+    for track in songPool:
+        audioFeatures = (token.track_audio_features(track.id))
+
+        acousticness = audioFeatures.acousticness
+        danceability = audioFeatures.danceability
+        energy = audioFeatures.energy
+        liveliness = audioFeatures.liveness
+        mode = audioFeatures.mode
+        speechiness = audioFeatures.speechiness
+
+        audioFeaureArray.append([acousticness, danceability, energy, liveliness, mode, speechiness])
+
+        index += 1
+
+    for x in audioFeaureArray:
+        print(x)
+
 
 
 #Main method
@@ -96,10 +123,9 @@ def main():
     userCmd = input("what would you like a reccomendation for? (enter 'song' or 'artist'): ")
     if(userCmd == 'song'):
         topTracks = getTop50Tracks(spotifyToken)
+        testPool = topTracks
         songPool = generateSongPool(spotifyToken, topTracks)
-
-
-
+        audioFeatureCompiler(spotifyToken, songPool)
 
 
 
