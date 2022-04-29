@@ -39,82 +39,129 @@ def generateSongPool(token, topTracks):
     layer2TrackList = []
     #Loop through each track in top 50 tracks
     x = 0
+    loadCount = 0
     for track in topTracks:
+        time.sleep(.01)
         if(len(track.artists) > 1):
+            time.sleep(.01)
             artistList = track.artists
             for artist in artistList[1:]:
                 artistID = artist.id
                 top10TrackList = token.artist_top_tracks(artistID, 'US')
                 for track in top10TrackList:
                     if track not in songPool:
-                        step = random.randrange(1, 3)
+                        step = random.randrange(1, 6)
                         #Shortens Final Song List
                         if(x % step == 0):
+                            #Simple loading screen process
+                            if(loadCount % 2 == 0):
+                                sys.stdout.write('\rloading / ')
+                            else:
+                                sys.stdout.write('\rloading \ ')
                             songPool.append(track)
                             layer1TrackList.append(track)
+                            loadCount += 1
                         x += 1
 
     #Loop through tracks in layer 1 tracks to find tracks of artist collaborators
     x = 0
+    loadCount = 0
     for track in layer1TrackList:
         time.sleep(.01)
         if(len(track.artists) > 1):
+            time.sleep(.01)
             artistList = track.artists
             for artist in artistList[1:]:
                 artistID = artist.id
                 top10TrackList = token.artist_top_tracks(artistID, 'US')
                 for track in top10TrackList:
                     if track not in songPool:
-                        step = random.randrange(1, 3)
+                        step = random.randrange(1, 6)
                         #Shortens final song list
                         if(x % step == 0):
+                            # Simple loading screen process
+                            if (loadCount % 2 == 0):
+                                sys.stdout.write('\rloading / ')
+                            else:
+                                sys.stdout.write('\rloading \ ')
                             songPool.append(track)
                             layer2TrackList.append(track)
+                            loadCount += 1
                         x += 1
 
   #Loop through tracks in layer 2 tracks to find tracks of artist collaborator's collaborators
     x = 0
+    loadCount = 0
     for track in layer2TrackList:
         time.sleep(.01)
         if(len(track.artists) > 1):
+            time.sleep(.01)
             artistList = track.artists
             for artist in artistList[1:]:
                 artistID = artist.id
                 top10TrackList = token.artist_top_tracks(artistID, 'US')
                 for track in top10TrackList:
                     if track not in songPool:
-                        step = random.randrange(1, 4)
+                        step = random.randrange(1, 6)
                         #Shortens final song list
                         if(x % step == 0):
+                            # Simple loading screen process
+                            if (loadCount % 2 == 0):
+                                sys.stdout.write('\rloading / ')
+                            else:
+                                sys.stdout.write('\rloading \ ')
                             songPool.append(track)
+                            loadCount += 1
                         x += 1
-    loading = False
+    print("size of song reccomendation pool is " + str(len(songPool)))
     return songPool
+
+#Break period to comply with API rate limit
+def coolDown():
+    for i in tqdm(range(0, 100), desc="Cooling down to comply with API rate limit"):
+        time.sleep(.1)
+    print("Continuing operations")
 
 #Get the most defining audio features
 def audioFeatureCompiler(token, songPool):
-    audioFeaureArray = []
-
+    audioFeatureArray = []
+    loadCount = 0
     index = 0
-    print("here")
     for track in songPool:
+        # Simple loading screen process
+        if (loadCount % 2 == 0):
+            sys.stdout.write('\rloading / ')
+        else:
+            sys.stdout.write('\rloading \ ')
+
         audioFeatures = (token.track_audio_features(track.id))
+        acousticness = float(audioFeatures.acousticness)
+        danceability = float(audioFeatures.danceability)
+        energy = float(audioFeatures.energy)
+        liveliness = float(audioFeatures.liveness)
+        speechiness = float(audioFeatures.speechiness)
 
-        acousticness = audioFeatures.acousticness
-        danceability = audioFeatures.danceability
-        energy = audioFeatures.energy
-        liveliness = audioFeatures.liveness
-        mode = audioFeatures.mode
-        speechiness = audioFeatures.speechiness
-
-        audioFeaureArray.append([acousticness, danceability, energy, liveliness, mode, speechiness])
+        tempArray = [acousticness, danceability, energy, liveliness, speechiness]
+        audioFeatureArray.append(tempArray)
 
         index += 1
+        loadCount += 1
+        time.sleep(.03)
 
-    for x in audioFeaureArray:
+    audioFeatureArray = np.array(audioFeatureArray)
+    return audioFeatureArray
+
+def clusterSongs(token, audioFeatureArray, numCategories):
+    k = numCategories
+    km = KMeans(n_clusters=k).fit(audioFeatureArray)
+    labels = km.labels_
+    labels = np.array(labels)
+    for x in range(len(audioFeatureArray)):
+        cluster = int(labels[x])
+        np.append(audioFeatureArray[x], cluster)
+
+    for x in audioFeatureArray:
         print(x)
-
-
 
 #Main method
 def main():
@@ -124,10 +171,10 @@ def main():
     if(userCmd == 'song'):
         topTracks = getTop50Tracks(spotifyToken)
         testPool = topTracks
-        songPool = generateSongPool(spotifyToken, topTracks)
-        audioFeatureCompiler(spotifyToken, songPool)
-
-
+        #songPool = generateSongPool(spotifyToken, topTracks)
+        #coolDown()
+        audioFeatureArray = audioFeatureCompiler(spotifyToken, testPool)
+        clusterSongs(spotifyToken, audioFeatureArray, 5)
 
 main()
 
