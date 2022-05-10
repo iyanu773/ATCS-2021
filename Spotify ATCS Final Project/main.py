@@ -1,4 +1,3 @@
-
 import random
 import tekore as tk
 import time
@@ -10,6 +9,8 @@ from sklearn.cluster import KMeans
 client_id = 'dcda589399b14d69a499ae046c464bee'
 client_secret = '7daada75b6fd4847a5e80af33e0b7b59'
 URI = 'http://localhost:8888/callback'
+
+
 
 #User Authorization Process
 #Return and authentication token
@@ -61,7 +62,7 @@ def generateSongPool(token, topTracks):
                 top10TrackList = token.artist_top_tracks(artistID, 'US')
                 for track in top10TrackList:
                     if track not in songPool:
-                        step = random.randrange(1, 10)
+                        step = random.randrange(1, 7)
                         #Shortens Final Song List
                         if(x % step == 0):
                             songPool.append(track)
@@ -85,7 +86,7 @@ def generateSongPool(token, topTracks):
                 top10TrackList = token.artist_top_tracks(artistID, 'US')
                 for track in top10TrackList:
                     if track not in songPool:
-                        step = random.randrange(1, 10)
+                        step = random.randrange(1, 7)
                         #Shortens final song list
                         if(x % step == 0):
                             songPool.append(track)
@@ -109,7 +110,7 @@ def generateSongPool(token, topTracks):
                 top10TrackList = token.artist_top_tracks(artistID, 'US')
                 for track in top10TrackList:
                     if track not in songPool:
-                        step = random.randrange(1, 10)
+                        step = random.randrange(1, 7)
                         #Shortens final song list
                         if(x % step == 0):
                             songPool.append(track)
@@ -137,6 +138,7 @@ def audioFeatureCompiler(token, songPool):
     loadCount = 0
     index = 0
     pbar = tqdm(total=length, desc="Compiling audio features")  #loading bar
+    #Loop through each track in the song pool and extract audio features
     for track in songPool:
         pbar.update(n=1)  # Increments counter for loading bar
         audioFeatures = (token.track_audio_features(track.id))
@@ -233,6 +235,24 @@ def generatePlaylist(token, recommendedSongTrackList):
     print("Playlist generated! Open Spotify and enjoy your new music!")
     exit()
 
+# Control playlist length by number of audio feature clusters
+def getRecommendationListLength():
+    numClusters = 0
+    print("What length would you like the song recommendation list to be?")
+    userCmd = input("Please enter 'short', 'medium', or 'long':  ")
+    while (userCmd != 'short' and userCmd != 'medium' and userCmd != 'long'):
+        userCmd = input("Please enter 'short', 'medium', or 'long':  ")
+
+    if (userCmd == 'short'):
+        numClusters = 40
+    elif (userCmd == 'medium'):
+        numClusters = 20
+    elif (userCmd == 'long'):
+        numClusters = 5
+
+    return numClusters
+
+
 
 
 #Main method
@@ -240,20 +260,26 @@ def main():
     print("Once terms are accepted, paste URL of localhost failure page into field requesting redirect URL")
     spotifyToken = authenticateUser()
     userCmd = input("what would you like a reccomendation for? (enter 'song' or 'artist'): ")
+    #Only accept valid commands
     while(userCmd != 'song' and userCmd != 'artist'):
         userCmd = input("what would you like a reccomendation for? (enter 'song' or 'artist'): ")
+    #song reccomendation path
     if(userCmd == 'song'):
+        # Number of audio feature clusters to create
+        numClusters = 0
         topTracks = getTop50Tracks(spotifyToken)
-        testPool = topTracks + topTracks
+        #testPool = topTracks + topTracks
         songPool = generateSongPool(spotifyToken, topTracks)
         coolDown()
         audioFeatureArray = audioFeatureCompiler(spotifyToken, songPool)
-        audioFeatureArrayWithClusters = clusterSongs(spotifyToken, audioFeatureArray, 5)
+        numClusters = getRecommendationListLength()
+        audioFeatureArrayWithClusters = clusterSongs(spotifyToken, audioFeatureArray, numClusters)
         targetCluster = getDominantCluster(audioFeatureArrayWithClusters, topTracks)
         recommendedSongNameList, recommendedSongTrackList = returnRecommendedSongs(targetCluster, audioFeatureArrayWithClusters, songPool, topTracks)
 
         print("Would you like to print the names of the recommended songs or make a playlist out of them?  ")
         userCmd = input("Type 'list' for a printed list or 'playlist' to have a playlist added to your spotify account:  ")
+        # Only accept valid commands
         while (userCmd != 'list' and userCmd != 'playlist'):
             userCmd = input("Type 'list' for a printed list or 'playlist' to have a playlist added to your spotify account:  ")
         if(userCmd == 'list'):
